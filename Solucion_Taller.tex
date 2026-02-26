@@ -1,0 +1,539 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Solución Taller 1: Análisis Bayesiano en Turismo}
+\author{Julian Jimenez \\ Tomas Rincon \\ Julian Duarte}
+\date{26 de febrero de 2026}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introducción}
+Este documento contiene la solución detallada del taller sobre inferencia bayesiana aplicado al caso de Villa de Leyva. Se utilizan modelos Gamma-Poisson y Beta-Binomial.
+
+\section*{Parte A: Gamma--Poisson (Conteos en la Plaza Mayor)}
+
+\subsection*{A1. Prior informada por comerciantes (histórica)}
+
+Comerciantes reportan que llegan en promedio $\mu = 50$ turistas/día con varianza $\sigma^2 = 200$. Asumimos una prior $\lambda \sim \text{Gamma}(\alpha, \beta)$ bajo la parametrización de tasa (rate).
+
+\subsubsection*{2. (G1) Gráfica de la Prior}
+
+La Figura \ref{fig:G1} muestra la distribución prior $\text{Gamma}(12.5, 0.25)$. El área sombreada representa el intervalo de credibilidad del 95\%, y la línea punteada roja indica la media de 50 turistas/día.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G1_Prior.png}
+    \caption{Distribución Prior Informada ($\lambda \sim \text{Gamma}(12.5, 0.25)$).}
+    \label{fig:G1}
+\end{figure}
+
+\subsubsection*{3. Interpretación de la Prior Informada}
+
+La "prior informada" representa el conocimiento histórico de los comerciantes. Una varianza de 200 con una media de 50 indica una incertidumbre moderada: aunque esperamos 50 turistas, el modelo permite variaciones considerables. Los parámetros $\alpha=12.5$ y $\beta=0.25$ reflejan que la información previa equivale a haber observado 12.5 turistas en un cuarto de día (o 50 en un día, pero con la dispersión especificada).
+
+\section*{A2. Dato observado y likelihood}
+
+Hoy contaron $y = 55$ turistas.
+
+\subsubsection*{1. Likelihood $p(y | \lambda)$}
+
+Dado que el conteo de turistas sigue una distribución Poisson, la verosimilitud (likelihood) para una observación $y$ es:
+\[ p(y | \lambda) = \frac{e^{-\lambda} \lambda^y}{y!} = \frac{e^{-\lambda} \lambda^{55}}{55!} \]
+
+Para el análisis bayesiano, nos interesa la likelihood como función de $\lambda$, por lo que omitimos las constantes que no dependen de dicho parámetro (como el factorial de $y$):
+\[ p(y | \lambda) \propto e^{-\lambda} \lambda^{55} \]
+
+Como función de $\lambda$, la likelihood describe qué tan probable es observar 55 turistas para diferentes valores del promedio diario $\lambda$.
+
+\subsubsection*{2. (G2) Gráfica de la Likelihood Escalada}
+
+La Figura \ref{fig:G2} muestra la likelihood escalada a un máximo de 1. El máximo de esta función ocurre en $\hat{\lambda}_{MLE} = y = 55$.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G2_Likelihood.png}
+    \caption{Likelihood Poisson para $y=55$, escalada a un máximo de 1.}
+    \label{fig:G2}
+\end{figure}
+
+\section*{A3. Posterior (conjugación) y comparación}
+
+\subsubsection*{1. Derivación paso a paso de la Posterior $\lambda | y$}
+
+Para encontrar la distribución posterior, aplicamos el Teorema de Bayes en su forma proporcional:
+\[ p(\lambda | y) \propto p(\lambda) \times p(y | \lambda) \]
+
+Donde:
+\begin{itemize}
+    \item \textbf{Prior:} $\lambda \sim \text{Gamma}(\alpha, \beta)$
+    \[ p(\lambda) \propto \lambda^{\alpha-1} e^{-\beta \lambda} \]
+    \item \textbf{Likelihood:} $y | \lambda \sim \text{Poisson}(\lambda)$
+    \[ p(y | \lambda) \propto e^{-\lambda} \lambda^y \]
+\end{itemize}
+
+Multiplicando ambas expresiones:
+\begin{align*}
+p(\lambda | y) &\propto \left( \lambda^{\alpha-1} e^{-\beta \lambda} \right) \times \left( e^{-\lambda} \lambda^y \right) \\
+p(\lambda | y) &\propto \lambda^{(\alpha-1) + y} \times e^{-(\beta \lambda + \lambda)} \\
+p(\lambda | y) &\propto \lambda^{(\alpha + y) - 1} \times e^{-(\beta + 1) \lambda}
+\end{align*}
+
+Reconocemos esta expresión como el núcleo (\textit{kernel}) de una distribución Gamma con nuevos parámetros:
+\begin{align*}
+\alpha_{post} &= \alpha + y \\
+\beta_{post} &= \beta + 1
+\end{align*}
+
+Sustituyendo nuestros valores ($\alpha = 12.5, \beta = 0.25, y = 55$):
+\begin{align*}
+\alpha_{post} &= 12.5 + 55 = 67.5 \\
+\beta_{post} &= 0.25 + 1 = 1.25
+\end{align*}
+
+Por lo tanto, la distribución posterior exacta es \boldmath{$\lambda | y \sim \text{Gamma}(67.5, 1.25)$}.
+
+\subsubsection*{2. Media e Intervalo Creíble 95\%}
+
+La media posterior se calcula como:
+\[ E[\lambda | y] = \frac{\alpha_{post}}{\beta_{post}} = \frac{67.5}{1.25} = 54 \]
+
+El intervalo creíble del 95\% (obtenido mediante software) es aproximadamente $[42.2, 67.6]$. Esto significa que, tras observar el dato de hoy, tenemos un 95\% de certeza de que la tasa promedio diaria de turistas está entre 42.2 y 67.6.
+
+\subsubsection*{3. (G3) Gráfica Prior vs Posterior}
+
+La Figura \ref{fig:G3} compara ambas distribuciones. Se observa cómo la posterior es mucho más estrecha y alta que la prior, indicando que la incertidumbre se ha reducido gracias a la nueva evidencia.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G3_Posterior.png}
+    \caption{Comparación entre Prior y Posterior para $\lambda$. El área sombreada es el IC 95\% de la posterior.}
+    \label{fig:G3}
+\end{figure}
+
+\subsubsection*{4. Interpretación: ¿Se movió mucho la posterior?}
+
+Sí, la posterior se movió significativamente hacia el dato observado ($y=55$). La media pasó de 50 (prior) a 54 (posterior). Además, la distribución se volvió mucho más concentrada. Esto ocurre porque el dato observado ($y=55$) tiene un "peso" mayor $(\beta=1)$ que el peso relativo de la prior $(\beta=0.25)$. En términos bayesianos, el dato ha dominado ligeramente sobre la creencia inicial, ajustando la estimación hacia arriba.
+
+\section*{A4. Prior débil (festival, pero poca fuerza)}
+
+Valentina sospecha que por el festival el promedio es mayor: $E[\lambda] = 80$, pero quiere representar una creencia con poca fuerza (alta incertidumbre).
+
+\subsubsection*{1. Propuesta de parámetros $\alpha$ y $\beta$}
+
+Para reflejar una "prior débil", debemos asignar un valor pequeño al parámetro de tasa $\beta$, ya que este actúa como el tamaño muestral equivalente. Proponemos una varianza $\sigma^2 = 800$ (diez veces la media), lo cual implica:
+\begin{align*}
+\beta &= \frac{E[\lambda]}{Var(\lambda)} = \frac{80}{800} = 0.1 \\
+\alpha &= E[\lambda] \times \beta = 80 \times 0.1 = 8
+\end{align*}
+
+Dada esta elección, la nueva prior es \boldmath{$\lambda \sim \text{Gamma}(8, 0.1)$}.
+
+\textbf{Justificación de "poca fuerza":} 
+En el modelo Gamma-Poisson, $\beta$ representa el peso relativo de la información previa frente a los datos nuevos (donde cada observación tiene un peso de 1). Un $\beta = 0.1$ significa que nuestra creencia inicial de 80 turistas tiene apenas el 10\% de la fuerza que tendrá el dato observado de hoy ($y=55$). Además, el alto valor de la varianza (800) genera una distribución muy plana y dispersa, indicando que estamos abiertos a que la tasa real sea muy distinta de 80.
+
+\subsubsection*{2. A4.2. Posterior por conjugación (Escenario débil)}
+
+Al igual que en el caso anterior, aplicamos el Teorema de Bayes para encontrar la distribución posterior con la nueva creencia inicial ($\alpha=8, \beta=0.1$):
+
+\begin{align*}
+p(\lambda | y) &\propto p(\lambda) \times p(y | \lambda) \\
+p(\lambda | y) &\propto \left( \lambda^{\alpha-1} e^{-\beta \lambda} \right) \times \left( e^{-\lambda} \lambda^y \right) \\
+p(\lambda | y) &\propto \lambda^{(8-1) + 55} \times e^{-(0.1 \lambda + \lambda)} \\
+p(\lambda | y) &\propto \lambda^{(8 + 55) - 1} \times e^{-(0.1 + 1) \lambda} \\
+p(\lambda | y) &\propto \lambda^{63-1} e^{-1.1 \lambda}
+\end{align*}
+
+Reconocemos esta expresión como el núcleo de una distribución \boldmath{$\lambda | y \sim \text{Gamma}(63, 1.1)$}. La media posterior para este escenario es $E[\lambda | y] \approx 57.27$ y el intervalo creíble del 95\% es aproximadamente $[44.0, 72.3]$.
+
+\subsubsection*{3. A4.3. (G1--G3) Evidencia gráfica (Escenario débil)}
+
+A continuación se presentan las tres gráficas obligatorias para el escenario de la prior débil propuesto por Valentina (Prior, Likelihood y Posterior):
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{graficas/G1_Weak_Prior.png}
+    \caption{G1-Weak: Prior Débil ($\lambda \sim \text{Gamma}(8, 0.1)$) con IC 95\% sombreado.}
+    \label{fig:G1_Weak}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{graficas/G2_Likelihood.png}
+    \caption{G2: Likelihood Poisson para $y=55$, escalada a un máximo de 1.}
+    \label{fig:G2_Weak}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.7\textwidth]{graficas/G3_Weak_Posterior.png}
+    \caption{G3-Weak: Comparación Prior Débil vs Posterior para $\lambda$ con IC posterior sombreado.}
+    \label{fig:G3_Weak}
+\end{figure}
+
+\subsubsection*{4. A4.4. Interpretación: Comparación de escenarios}
+
+Al comparar el caso de la \textbf{prior informada} vs. la \textbf{prior débil}, observamos lo siguiente:
+\begin{itemize}
+    \item \textbf{¿Quién manda?:} En el caso de la prior débil ($\beta=0.1$), el dato observado ($y=55$) tiene una influencia dominante. La media posterior (57.27) está mucho más cerca del dato que del valor esperado inicial (80). 
+    \item \textbf{Inercia:} La prior informada de los comerciantes tiene más "inercia" o resistencia al cambio ($\beta=0.25$). Aunque la media posterior también se movió hacia el dato (llegando a 54), su desviación respecto a la creencia inicial fue menor en proporción.
+    \item \textbf{Precisión:} En ambos casos, el intervalo creíble de la posterior se estrecha significativamente respecto a la prior, demostrando cómo la evidencia empírica reduce la incertidumbre, sin importar cuán vaga fuera la creencia inicial.
+\end{itemize}
+
+\section*{A5. Predicción para mañana (decisión de porciones)}
+
+\subsection*{1. Construcción de la Predictiva Posterior $Y_{mañana} | y$}
+
+Para predecir el número de turistas que llegarán mañana ($Y_{new}$), no basta con usar la media de $\lambda$. Debemos considerar tanto la incertidumbre sobre la tasa real (capturada en la posterior $p(\lambda | y)$) como la variabilidad propia del proceso de conteo (Poisson). Matemáticamente, esto se logra mediante la \textbf{distribución predictiva posterior}:
+\[ p(y_{new} | y) = \int_{0}^{\infty} p(y_{new} | \lambda) \cdot p(\lambda | y) d\lambda \]
+
+Donde $p(y_{new} | \lambda)$ es la verosimilitud Poisson y $p(\lambda | y)$ es la posterior Gamma. Al realizar la integración:
+\[ p(y_{new} | y) = \int_{0}^{\infty} \left( \frac{e^{-\lambda} \lambda^{y_{new}}}{y_{new}!} \right) \left( \frac{\beta_{post}^{\alpha_{post}}}{\Gamma(\alpha_{post})} \lambda^{\alpha_{post}-1} e^{-\beta_{post} \lambda} \right) d\lambda \]
+\[ p(y_{new} | y) = \frac{\beta_{post}^{\alpha_{post}}}{y_{new}! \Gamma(\alpha_{post})} \int_{0}^{\infty} \lambda^{\alpha_{post} + y_{new} - 1} e^{-(\beta_{post} + 1) \lambda} d\lambda \]
+
+La integral corresponde al núcleo de una distribución Gamma con parámetros $\alpha' = \alpha_{post} + y_{new}$ y $\beta' = \beta_{post} + 1$, cuyo valor es $\Gamma(\alpha_{post} + y_{new}) / (\beta_{post} + 1)^{\alpha_{post} + y_{new}}$. Sustituyendo, obtenemos:
+\[ p(y_{new} | y) = \frac{\Gamma(\alpha_{post} + y_{new})}{y_{new}! \Gamma(\alpha_{post})} \left( \frac{\beta_{post}}{\beta_{post}+1} \right)^{\alpha_{post}} \left( \frac{1}{\beta_{post}+1} \right)^{y_{new}} \]
+
+Esta expresión corresponde a la función de masa de una distribución \textbf{Binomial Negativa}, denotada como $Y_{new} | y \sim \text{NegBin}(n, p)$, donde:
+\begin{itemize}
+    \item $n = \alpha_{post}$ (número de éxitos o parámetro de forma).
+    \item $p = \frac{\beta_{post}}{\beta_{post} + 1}$ (probabilidad de éxito).
+\end{itemize}
+
+A continuación, aplicamos estos resultados a los dos escenarios del taller:
+
+\subsubsection*{Escenario A: Prior Informada (Comerciantes)}
+Partiendo de la posterior $\lambda | y \sim \text{Gamma}(67.5, 1.25)$:
+\begin{itemize}
+    \item \textbf{Parámetros:} $n = 67.5$ y $p = \frac{1.25}{1.25 + 1} = \frac{1.25}{2.25} \approx 0.5556$.
+    \item \textbf{Distribución:} $Y_{mañana} | y \sim \text{NegBin}(67.5, 0.5556)$.
+    \item \textbf{Media Predictiva:} $E[Y_{mañana} | y] = \frac{\alpha_{post}}{\beta_{post}} = \frac{67.5}{1.25} = 54$ turistas.
+\end{itemize}
+
+\subsubsection*{Escenario B: Prior Débil (Valentina - Festival)}
+Partiendo de la posterior $\lambda | y \sim \text{Gamma}(63, 1.1)$:
+\begin{itemize}
+    \item \textbf{Parámetros:} $n = 63$ y $p = \frac{1.1}{1.1 + 1} = \frac{1.1}{2.1} \approx 0.5238$.
+    \item \textbf{Distribución:} $Y_{mañana} | y \sim \text{NegBin}(63, 0.5238)$.
+    \item \textbf{Media Predictiva:} $E[Y_{mañana} | y] = \frac{63}{1.1} \approx 57.27$ turistas.
+\end{itemize}
+
+En ambos casos, la media de la predictiva coincide con la media de la posterior, pero la dispersión es mayor debido a la suma de incertidumbre paramétrica y aleatoriedad de Poisson.
+\subsection*{2. (A5.2) Obtención de Intervalos Predictivos 95\%}
+
+Para cada escenario, calculamos el intervalo predictivo (IP) del 95\%, el cual nos indica el rango en el que esperamos que caiga el número de turistas de mañana con un 95\% de probabilidad:
+
+\begin{itemize}
+    \item \textbf{Escenario A (Informada):} El IP 95\% es \boldmath{$[36, 75]$}. Esto significa que hay una probabilidad del 95\% de que lleguen entre 36 y 75 turistas mañana.
+    \item \textbf{Escenario B (Débil):} El IP 95\% es \boldmath{$[38, 79]$}. En este caso, el rango es ligeramente más alto y amplio, reflejando tanto la mayor media como la mayor incertidumbre de la prior de Valentina.
+\end{itemize}
+
+\subsection*{3. (G4) Evidencia Gráfica de la Predictiva (Escenarios A y B)}
+
+Las siguientes figuras muestran la distribución de masa (PMF) de la predictiva posterior (Binomial Negativa). Siguiendo las reglas del taller, se ha \textbf{sombreado/coloreado} el bloque de barras que representa el intervalo predictivo del 95\% para facilitar la visualización del riesgo.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G4_Predictiva.png}
+    \caption{G4: Predictiva Posterior (Prior Informada). El área resaltada corresponde al IP 95\% $[36, 75]$.}
+    \label{fig:G4}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G4_Weak_Predictiva.png}
+    \caption{G4-Weak: Predictiva Posterior (Prior Débil). El área resaltada corresponde al IP 95\% $[38, 79]$.}
+    \label{fig:G4_Weak}
+\end{figure}
+
+Para optimizar la operación, sugerimos la opción \textbf{Prudente} de 80 porciones base al percentil 95 del escenario de Valentina, cubriendo eficazmente el riesgo de alta demanda por el festival. Mientras que la opción \textbf{Eficiente} (54--57 porciones) busca minimizar el desperdicio promedio, los 80 tamales garantizan el servicio frente a la variabilidad extrema capturada por la distribución predictiva. Esta elección es estadísticamente robusta, asegurando el abastecimiento en el 95\% de los escenarios posibles, incluso bajo alta incertidumbre. Se concluye que prepararse para el límite superior es la mejor estrategia para mitigar el riesgo de ventas perdidas en un día de alta expectativa turística.
+
+\section*{Parte B: Beta--Binomial (Proporción en el centro histórico)}
+
+\subsection*{B1. Prior basada en experiencia local}
+
+Para modelar la proporción $p$ de turistas que permanecen en el centro histórico, utilizamos una distribución Beta como prior conjugada de la Binomial. La experiencia local sugiere una media $\mu = 0.40$ con una varianza $\sigma^2 = 0.02$.
+
+\subsubsection*{1. Cálculo de $\alpha$ y $\beta$ para la Prior}
+
+Para encontrar los parámetros de la distribución $p \sim \text{Beta}(\alpha, \beta)$, utilizamos las fórmulas de calibración basadas en los momentos. Primero, calculamos la "fuerza" de la prior o suma de parámetros $S = \alpha + \beta$:
+\[ S = \frac{\mu(1 - \mu)}{\sigma^2} - 1 = \frac{0.40(1 - 0.40)}{0.02} - 1 = \frac{0.24}{0.02} - 1 = 11 \]
+
+A partir de $S$, obtenemos los parámetros individuales:
+\begin{align*}
+\alpha &= \mu \times S = 0.40 \times 11 = 4.4 \\
+\beta &= (1 - \mu) \times S = 0.60 \times 11 = 6.6
+\end{align*}
+
+Por lo tanto, nuestra prior basada en la experiencia local queda definida como \boldmath{$p \sim \text{Beta}(4.4, 6.6)$}.
+
+\subsubsection*{2. (G1) Gráfica de la Prior Beta}
+
+La Figura \ref{fig:G1_Beta} muestra la distribución prior $\text{Beta}(4.4, 6.6)$ obtenida a partir de la experiencia local. La línea roja punteada indica la media esperada del 40\% (0.40), y la región sombreada representa el intervalo de credibilidad del 95\%.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G1_Beta_Prior.png}
+    \caption{G1-Beta: Prior Local ($\text{Beta}(4.4, 6.6)$) para la proporción de turistas en el centro.}
+    \label{fig:G1_Beta}
+\end{figure}
+
+\subsubsection*{3. B1.3. Interpretación de pseudo-observaciones}
+
+En el modelo Beta-Binomial, los parámetros de la prior $\text{Beta}(\alpha, \beta)$ tienen una interpretación intuitiva conocida como "pseudo-observaciones" o conteos virtuales previos:
+\begin{itemize}
+    \item $\alpha = 4.4$ corresponde al número equivalente de "éxitos" (turistas que se quedan en el centro histórico).
+    \item $\beta = 6.6$ corresponde al número equivalente de "fracasos" (turistas que deciden ir a otros lugares).
+    \item La suma $S = \alpha + \beta = 11$ representa el "tamaño de muestra equivalente", es decir, la fuerza o el peso total que tiene esta creencia inicial frente a los nuevos datos.
+\end{itemize}
+
+Al tener una fuerza $S = 11$, decimos que el conocimiento empírico de los administradores equivale a haber observado a 11 turistas, de los cuales 4.4 se quedaron y 6.6 no. Esta es una cantidad de información moderadamente baja, ya que si conseguimos una muestra real de tamaño $n=100$, el nuevo dato dominará rápidamente sobre esta prior (el dato pesará unas 9 veces más que la creencia original).
+
+\section*{B2. Dato observado y posterior (conjugación)}
+
+Hoy encuestaron a $n = 100$ turistas y $x = 42$ respondieron afirmativamente (se quedarán en el centro histórico).
+
+\subsubsection*{1. B2.1. Likelihood Binomial}
+
+La verosimilitud de observar $x$ éxitos en $n$ ensayos, dado una proporción $p$, sigue una distribución Binomial. Omitiendo la constante combinatoria, se expresa funcionalmente como:
+\[ p(x | p) \propto p^x (1 - p)^{n - x} = p^{42} (1 - p)^{58} \]
+
+\subsubsection*{2. B2.2. (G2) Gráfica de la Likelihood}
+
+La Figura \ref{fig:G2_Beta} muestra la verosimilitud escalada al máximo de 1. Su pico (el estimador de máxima verosimilitud, MLE) se ubica exactamente en $p = 42/100 = 0.42$.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G2_Beta_Likelihood.png}
+    \caption{G2-Beta: Likelihood Binomial para $n=100, x=42$, escalada a un máximo de 1.}
+    \label{fig:G2_Beta}
+\end{figure}
+
+\subsubsection*{3. B2.3. Derivación de la Posterior en conjugación}
+
+Por el Teorema de Bayes, la posterior es proporcional al producto de la prior Beta y la likelihood Binomial:
+\[ p(p | x) \propto p(p) \times p(x | p) \]
+
+Donde nuestra prior es $p \sim \text{Beta}(\alpha, \beta)$, con $\alpha=4.4$ y $\beta=6.6$:
+\[ p(p) \propto p^{\alpha-1} (1-p)^{\beta-1} \]
+
+Multiplicando ambas:
+\begin{align*}
+p(p | x) &\propto \left( p^{\alpha-1} (1 - p)^{\beta-1} \right) \times \left( p^x (1 - p)^{n-x} \right) \\
+p(p | x) &\propto p^{(\alpha-1)+x} (1 - p)^{(\beta-1)+(n-x)} \\
+p(p | x) &\propto p^{(\alpha+x)-1} (1 - p)^{(\beta+n-x)-1}
+\end{align*}
+
+Esta expresión corresponde al núcleo de una nueva distribución Beta con parámetros actualizados:
+\begin{align*}
+\alpha_{post} &= \alpha + x = 4.4 + 42 = 46.4 \\
+\beta_{post} &= \beta + n - x = 6.6 + 58 = 64.6
+\end{align*}
+
+Por lo tanto, la distribución posterior se actualiza a \boldmath{$p | x \sim \text{Beta}(46.4, 64.6)$}.
+
+\subsubsection*{4. B2.4. Media e Intervalo Creíble 95\%}
+
+La tasa de proporción esperada ajustada por la nueva evidencia es:
+\[ E[p | x] = \frac{\alpha_{post}}{\alpha_{post} + \beta_{post}} = \frac{46.4}{46.4 + 64.6} = \frac{46.4}{111} \approx 0.418 \]
+
+El intervalo creíble de la posterior al 95\% se estima calculando los percentiles 2.5\% y 97.5\% de la distribución $\text{Beta}(46.4, 64.6)$, lo que nos da \boldmath{$[0.328, 0.511]$}. Es decir, tras observar los datos, estamos 95\% seguros de que la proporción real de turistas que se quedan en el centro está entre 32.8\% y 51.1\%.
+
+\subsubsection*{5. B2.5. (G3) Interpretación: Efecto del dato sobre la prior}
+
+La Figura \ref{fig:G3_Beta} (obtenida mediante \texttt{generar\_graficas.py}) compara la creencia inicial con la posterior actualizada. 
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G3_Beta_Posterior.png}
+    \caption{G3-Beta: Comparación Prior Local vs Posterior para $p$. Área sombreada es IC 95\%.}
+    \label{fig:G3_Beta}
+\end{figure}
+
+Al graficarlas, vemos que la posterior se ha desplazado a una media de 41.8\% y se ha vuelto muchísimo más estrecha (menor varianza). Esto sucede porque el dato $n=100$ ($x=42$) es sustancialmente mayor que la "fuerza" inicial (suma $\alpha+\beta=11$). En consecuencia, el peso abrumador del dato empírico domina la estimación final y reduce masivamente la incertidumbre previa.
+
+\section*{B3. Prior no informativa (Nicolás) vs Experiencia Local}
+
+Nicolás cuestiona el sesgo de la experiencia de los administradores y propone evaluar los datos bajo una postura de ignorancia total inicial.
+
+\subsubsection*{1. B3.1. Cálculo de la Posterior con Prior Uniforme}
+
+Para representar matemáticamente este escenario de "ignorancia total", se utiliza una distribución Uniforme Continua entre 0 y 1, que pertenece a la misma familia conjugada bajo la forma \boldmath{$p \sim \text{Beta}(1, 1)$}.
+
+Las pseudo-observaciones para $p \sim \text{Beta}(1, 1)$ indican una fuerza $S = 2$. Esto significa que, antes de realizar la encuesta, se asume ficticiamente que de 2 turistas observados, 1 se quedó y 1 se fue, dejando una plana e igual probabilidad de $50\%$ inicial.
+
+Aplicando la conjugación con los mismos datos ($n=100, x=42$):
+\begin{align*}
+\alpha_{post} &= \alpha_{nic} + x = 1 + 42 = 43 \\
+\beta_{post} &= \beta_{nic} + n - x = 1 + 58 = 59
+\end{align*}
+
+La nueva posterior de Nicolás es \boldmath{$\text{Beta}(43, 59)$}.
+
+Las métricas de la posterior de Nicolás arrojan una media de:
+\[ E[p | x, nic] = \frac{43}{43+59} = \frac{43}{102} \approx 0.4215 \text{ (42.15\%)} \]
+El cálculo del intervalo creíble al 95\% da \boldmath{$[0.328, 0.518]$}.
+
+\subsubsection*{2. B3.2. Comparación de las Posteriores}
+
+La Figura \ref{fig:G3_Comparativa} ilustra ambas distribuciones posteriores (la derivada de la experiencia local en B2, frente a la derivada de la ignorancia total en B3).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G3_Comparacion_Posteriores.png}
+    \caption{G3-Comparativa: Posteriores con Prior de Experiencia Local vs Prior Uniforme.}
+    \label{fig:G3_Comparativa}
+\end{figure}
+
+Al superponerlas, notamos que las dos curvas son prácticamente idénticas.
+
+\subsubsection*{3. B3.3. Conclusiones Relevantes}
+
+La conclusión principal es que \textbf{la elección de la prior en este problema resultó ser irrelevante}. Las medias posteriores varían mínimamente ($41.8\%$ vs $42.2\%$), y los intervalos de certidumbre también marcan exactamente la misma zona de riesgo.
+
+Este fenómeno estadístico reafirma que cuando se dispone de un tamaño de muestra empírica lo suficientemente robusto ("fuerza" de datos $n=100$), este abruma y domina por completo la inferencia final si la prior tiene poca representación (como las fuerzas débiles de $S=11$ de la local y $S=2$ de la uniforme). Es decir, ante evidencia fuerte, el sesgo humano u opiniones iniciales tienden a diluirse o esfumarse para favorecer lo que observamos en la realidad.
+
+\section*{B4. La influencia de una creencia extrema (Experto Terco)}
+
+Para evaluar los límites del modelo estadístico, simulamos la intervención de un "experto terco" (por ejemplo, un guía turístico antiguo o el alcalde) que está absolutamente convencido de que la inmensa mayoría de los turistas pernoctan en el centro histórico. Suponemos que asegura una proporción del $80\%$ basándose en años de ver a la gente en la plaza.
+
+\subsubsection*{1. B4.1. Construcción de la Prior Experta Terca}
+
+Para que los datos de la encuesta de hoy ($n=100$) \textbf{no logren} hacerlo cambiar bruscamente de opinión, necesitamos dotarlo de una prior con una centralidad alta ($\mu = 0.80$) y una fuerza abrumadora ($S = 400$, es decir, actúa como si hubiese encuestado mentalmente a 400 turistas). 
+
+Los parámetros para esta prior Beta Terca serían:
+\begin{align*}
+\alpha_{terco} &= \mu \times S = 0.80 \times 400 = 320 \\
+\beta_{terco} &= (1 - \mu) \times S = 0.20 \times 400 = 80
+\end{align*}
+Por tanto, comenzamos con \boldmath{$p \sim \text{Beta}(320, 80)$}.
+
+\subsubsection*{2. B4.2. Derivación de la Posterior}
+
+Frente a la evidencia implacable de los encuestadores de hoy ($n=100, x=42$), realizamos la conjugación con la prior del experto:
+\begin{align*}
+\alpha_{post} &= \alpha_{terco} + x = 320 + 42 = 362 \\
+\beta_{post} &= \beta_{terco} + n - x = 80 + 58 = 138
+\end{align*}
+
+La nueva posterior del experto terco es \boldmath{$\text{Beta}(362, 138)$}.
+
+Calculamos las métricas de esta nueva distribución:
+\[ E[p | x, terco] = \frac{362}{362+138} = \frac{362}{500} = 0.724 \text{ (72.4\%)} \]
+El intervalo creíble al 95\% (obtenido bajo cálculo estadístico) es el rango de confianza de su posterior ajustada. Observamos que la media solo descendió de $80\%$ a $72.4\%$.
+
+\subsubsection*{3. Comparación de las tres Posteriores con formato G3}
+
+La Figura \ref{fig:G3_Tres} contrasta de manera simultánea las tres posteriores derivadas de diferentes estados de creencia inicial:
+(i) Prior Local ($S=11, \mu=0.40$).
+(ii) Prior Uniforme/Ignorante ($S=2, \mu=0.50$).
+(iii) Prior Experta Terca ($S=400, \mu=0.80$).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{graficas/G3_Comparacion_Tres_Posteriores.png}
+    \caption{G3-Comparativa Final: Superposición de las 3 Posteriores evaluadas. Se incluyen los intervalos creíbles 95\% (sombreados) y la línea vertical en la respectiva media posterior.}
+    \label{fig:G3_Tres}
+\end{figure}
+
+Cumpliendo con las convenciones G3, la gráfica expone de forma contundente la ley del "poder de los datos vs. el peso de la prior" en el análisis Bayesiano:
+Mientras que las posteriores de la Experiencia Local (verde) y de Nicolás (azul punteada) son indistinguibles, la posterior del Experto Terco (rojo oscuro) resalta por estar completamente desligada del pelotón. 
+
+Debido al absurdo peso inicial $S=400$ contra la nueva evidencia $n=100$, los datos del censo no tuvieron el poder suficiente para desanclar sustancialmente al experto de su extremismo inicial del 80\%, logrando apenas halarlo marginalmente a una posterior concentrada y muy sesgada alrededor del 72.4\%. Es la prueba matemática perfecta de "quién manda": gana siempre quien aporte el mayor "tamaño de muestra", ya sea real u opinión apilada.
+
+\section*{B5. Predicción Beta-Binomial para $m=50$ turistas}
+
+Se prevé que mañana lleguen $m=50$ turistas. Nos interesa predecir $\tilde{x}$, es decir, cuántos de esos 50 decidirán quedarse en el centro histórico. Para esto empleamos la distribución Predictiva Posterior, que incorpora tanto la incertidumbre de la proporción $p$ como la variabilidad del proceso Binomial. Esta distribución se conoce como \textbf{Beta-Binomial}.
+
+Conforme a las instrucciones, calculamos la distribución Beta-Binomial bajo los tres escenarios de creencias analizados en esta sección:
+
+\subsubsection*{1. Predictiva con Experiencia Local (B2)}
+\begin{itemize}
+    \item \textbf{Posterior base:} $p|x \sim \text{Beta}(46.4, 64.6)$
+    \item \textbf{Distribución Predictiva:} $\tilde{x} \sim \text{Beta-Binomial}(m=50, \alpha=46.4, \beta=64.6)$
+    \item \textbf{Media Esperada:} $\approx 20.9$ turistas.
+    \item \textbf{Intervalo Predictivo 95\%:} \textbf{[13, 29]}. Estamos un 95\% seguros de que entre 13 y 29 turistas se quedarán.
+\end{itemize}
+
+\subsubsection*{2. Predictiva con Prior Uniforme de Nicolás (B3)}
+\begin{itemize}
+    \item \textbf{Posterior base:} $p|x \sim \text{Beta}(43, 59)$
+    \item \textbf{Distribución Predictiva:} $\tilde{x} \sim \text{Beta-Binomial}(m=50, \alpha=43, \beta=59)$
+    \item \textbf{Media Esperada:} $\approx 21.1$ turistas.
+    \item \textbf{Intervalo Predictivo 95\%:} \textbf{[13, 29]}. Resultados empíricamente idénticos al de la experiencia local, derivado de que los datos ($n=100$) opacan ambas priors.
+\end{itemize}
+
+\subsubsection*{3. Predictiva con Experto Terco (B4)}
+\begin{itemize}
+    \item \textbf{Posterior base:} $p|x \sim \text{Beta}(362, 138)$
+    \item \textbf{Distribución Predictiva:} $\tilde{x} \sim \text{Beta-Binomial}(m=50, \alpha=362, \beta=138)$
+    \item \textbf{Media Esperada:} $\approx 36.2$ turistas.
+    \item \textbf{Intervalo Predictivo 95\%:} \textbf{[29, 42]}. Aquí las decisiones operativas cambiarían radicalmente si le creemos a ciegas al experto terco en lugar de a la evidencia empírica (la encuesta).
+\end{itemize}
+
+\subsubsection*{Evidencia Gráfica (G4)}
+
+A continuación, ilustramos la masiva de probabilidad para cada modelo, con sus sendos Intervalos de Credibilidad del 95\% debidamente sombreados y la línea vertical en sus medias predicciones.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.65\textwidth]{graficas/G4_Beta_Predictiva_Local.png}
+    \caption{G4: Predictiva Beta-Binomial basada en Prior Local.}
+    \label{fig:G4_Local}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.65\textwidth]{graficas/G4_Beta_Predictiva_Uniforme.png}
+    \caption{G4: Predictiva Beta-Binomial basada en Prior Uniforme.}
+    \label{fig:G4_Uniforme}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.65\textwidth]{graficas/G4_Beta_Predictiva_Terco.png}
+    \caption{G4: Predictiva Beta-Binomial basada en Experto Terco.}
+    \label{fig:G4_Terco}
+\end{figure}
+
+\subsubsection*{4. Decisión: ¿Instalar el punto de venta en el centro histórico?}
+
+Al cruzar los datos y la predicción, la recomendación operativa \textbf{es no instalar un punto de venta único en el centro histórico}, o al menos no basar todo el negocio exclusivamente allí. 
+
+\textbf{Justificación basada en incertidumbre:} 
+Nuestra distribución predictiva Beta-Binomial (tomando los modelos válidos de la experiencia local y la uniforme) nos entrega un intervalo creíble del 95\% muy claro: de $m=50$ turistas futuros, el número de personas que se quedará en el centro estará en el rango de \textbf{13 a 29}. 
+
+Incluso en el escenario más optimista dentro de este intervalo de confianza ($29$ personas), estaríamos perdiendo a más del 40\% del grupo total. En el escenario medio (aproximadamente $21$ personas), habremos dejado ir a casi el 60\% de los clientes potenciales, ya que estos preferirán salir a visitar cascadas, viñedos o pozos azules. La incertidumbre sobre la demanda (que en el peor de los casos cae hasta apenas 13 clientes) es lo suficientemente asimétrica hacia la "baja demanda" como para desaconsejar colocar toda la capacidad productiva en la plaza principal. Estratégicamente, se debería ubicar el puesto de los tamales en un punto de convergencia o movilidad hacia las afueras (como la terminal de buses o las salidas peatonales clave) o dividir el lote de tamales mediante ventas móviles para mitigar este alto riesgo de capacidad ociosa e inventario sobrante.
+
+\section*{Parte C: Análisis integrador (Decisión final)}
+
+Este comité ha consolidado la evidencia estadística de los flujos de turistas hacia Villa de Leyva y su comportamiento en la zona céntrica, para articular la siguiente recomendación final de negocio evaluada bajo la doctrina de la inferencia Bayesiana:
+
+\subsubsection*{1. Recomendación de porciones a preparar (Escenario A)}
+Según los conteos probabilísticos obtenidos sobre visitantes, sugerimos dos aproximaciones para la cadena de producción de los tamales:
+\begin{itemize}
+    \item \textbf{Estrategia Eficiente (Basada en la media):} Produciendo alrededor de \textbf{54 a 57 tamales diarios} (medias de las distribuciones predictivas para el escenario normal y de festival moderado), se minimizarán los desperdicios mientras se satisface la tendencia central de la demanda probada y sostenida.
+    \item \textbf{Estrategia Prudente (Basada en el P95):} Escalar la operación y fijar la producción final en \textbf{71 a 75 tamales diarios} (percentil 95\% del intervalo predictivo) mitigará eficientemente cualquier salto abrupto y alta demanda producto del festival sin arriesgar ventas perdidas o quiebres catastróficos de inventario.
+\end{itemize}
+
+\subsubsection*{2. Recomendación de ubicación operativa (Escenario B)}
+Nuestra distribución Beta-Binomial predictiva expone de forma clara que, proyectando ante la entrada de los próximos 50 turistas, solo \textbf{21 clientes promedios} se ubicarán en los recintos de la plaza. Nuestro intervalo del 95\% dictamina un máximo posible de afluencia interna de apenas \textbf{29 personas}.
+Por lo consiguiente, la recomendación concluyente es \textbf{no anclar ni centralizar la operación principal en un punto fijo del centro histórico.} Operativamente sugerimos desplazar la venta mediante exhibidores móviles o situarnos explícitamente a las afueras, capitalizando en el grueso silencioso ($60\%$) que saldrá a rutas suburbanas y naturales colindantes.
+
+\subsubsection*{3. Comparación e Impacto de las Creencias Iniciales (Priors)}
+Este ejercicio sirvió para validar la madurez y dominancia que ejerce la recolección estricta de datos (encuestas duras) sobre la especulación técnica. El tamaño sustancial de nuestra evidencia ($\text{ej. } n=100$) logró neutralizar y reconciliar escenarios altamente distantes:
+Las suposiciones derivadas en el modelo de \textit{prior informada} por los comerciantes (Prior de $0.40, S=11$) y una \textit{prior de ignorancia total uniformada} (0.50, $S=2$) desembocaron contundentemente en la misma decisión matemática ($E[p]\sim 42\%$). 
+Por el contrario, de haber fundamentado ingenuamente nuestra logística sobre las aseveraciones del actor \textit{Experto Terco} con alto sesgo (prior ultra-concentrada de $0.80$, fingiendo $S=400$ pseudodatos ilusorios), la inferencia final dictaba instalar locaciones en la plaza previendo un estallido irreal de $36$ clientes de los esperados $50$, lo último hubiera provocado una pérdida de rentabilidad directa por stock muerto.
+
+\subsubsection*{4. Veredicto Final del Comité de Datos}
+``\textbf{Decidimos preparar estratégicamente 75 porciones y posicionar su comercialización de forma móvil por las periferias porque con un 95\% de credibilidad en nuestras predicciones, aseguramos capturar asimétricamente a la mayoría de turistas que abandonan el centro mientras garantizamos blindar al máximo nuestra elasticidad operativa ante súbitos desbordamientos de demanda producidos por el festival general.}''
+
+\end{document}
